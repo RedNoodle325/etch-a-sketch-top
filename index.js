@@ -29,7 +29,6 @@ function createContainer() {
   return container;
 }
 
-
 function setGrid(size) {
   // Remove existing grid
   const existingGrid = document.querySelector(".gridContainer");
@@ -57,7 +56,7 @@ function setGrid(size) {
     // Optional: Add a light border for visibility
     gridBox.style.border = "0.5px solid #ccc";
 
-    // Hover effect
+    // Hover effect for mouse
     gridBox.addEventListener("mouseenter", () => {
       gridBox.style.backgroundColor = "grey";
     });
@@ -65,8 +64,32 @@ function setGrid(size) {
     // Add grid box to the container
     gridContainer.appendChild(gridBox);
   }
+
+  // Enable touch support for the grid
+  enableTouchEvents(gridContainer);
 }
 
+function enableTouchEvents(container) {
+  // Handle when the finger touches the grid
+  container.addEventListener("touchstart", (event) => {
+    handleTouch(event);
+  });
+
+  // Handle when the finger moves across the grid
+  container.addEventListener("touchmove", (event) => {
+    handleTouch(event);
+    event.preventDefault(); // Prevent scrolling
+  });
+}
+
+function handleTouch(event) {
+  const touch = event.touches[0]; // Get the first touch point
+  const target = document.elementFromPoint(touch.clientX, touch.clientY); // Get the element under the touch point
+
+  if (target && target.classList.contains("gridBox")) {
+    target.style.backgroundColor = "grey"; // Change the grid box color
+  }
+}
 
 function createResetButton() {
   const resetButton = document.createElement("button");
