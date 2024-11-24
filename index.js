@@ -14,17 +14,21 @@ function createContainer() {
   const container = document.createElement("div");
   container.className = "gridContainer";
   container.style.display = "flex";
-  container.style.flexWrap = "wrap"; // Allows items to wrap
-  container.style.justifyContent = "center"; // Centers the grid
-  container.style.alignContent = "center"; // Ensures grid stays centered vertically
+  container.style.flexWrap = "wrap"; // Ensures items wrap into rows
+  container.style.justifyContent = "flex-start"; // Align items to the start
+  container.style.alignContent = "flex-start"; // Align wrapped rows to the top
   container.style.width = "80vw"; // Set grid width (responsive)
-  container.style.height = "80vw"; // Set grid height to match width for square shape
-  container.style.maxWidth = "600px"; // Optional: cap size for large screens
-  container.style.maxHeight = "600px"; // Match width cap for perfect square
+  container.style.height = "80vw"; // Set grid height to match width
+  container.style.maxWidth = "600px"; // Cap size for large screens
+  container.style.maxHeight = "600px"; // Match width cap
   container.style.margin = "1em auto";
-  container.style.border = "1px solid #000"; // Optional border for grid
+  container.style.border = "1em black solid";
+  container.style.boxSizing = "border-box"; // Includes border in dimensions
+  container.style.cursor = "pointer";
+
   return container;
 }
+
 
 function setGrid(size) {
   // Remove existing grid
@@ -38,17 +42,20 @@ function setGrid(size) {
   body.appendChild(gridContainer);
 
   // Calculate the size of each grid item
-  const containerWidth = gridContainer.offsetWidth; // Get actual container width
-  const itemSize = Math.floor(containerWidth / size); // Ensure grid items fit exactly
+  const containerWidth = gridContainer.clientWidth; // Get the actual container width
+  const itemSize = containerWidth / size; // Divide the width evenly by the grid size
 
+  // Create grid items
   for (let i = 0; i < size * size; i++) {
     const gridBox = document.createElement("div");
     gridBox.className = "gridBox";
-    gridBox.style.width = `${itemSize}px`; // Set exact width
-    gridBox.style.height = `${itemSize}px`; // Set exact height for square
-    gridBox.style.boxSizing = "border-box"; // Includes border in size
-    gridBox.style.border = "1px solid #ccc";
+    gridBox.style.width = `${itemSize}px`; // Set width based on calculation
+    gridBox.style.height = `${itemSize}px`; // Set height equal to width for squares
+    gridBox.style.boxSizing = "border-box"; // Ensure borders don't affect size
     gridBox.style.backgroundColor = "#f9f9f9";
+
+    // Optional: Add a light border for visibility
+    gridBox.style.border = "0.5px solid #ccc";
 
     // Hover effect
     gridBox.addEventListener("mouseenter", () => {
@@ -59,6 +66,7 @@ function setGrid(size) {
     gridContainer.appendChild(gridBox);
   }
 }
+
 
 function createResetButton() {
   const resetButton = document.createElement("button");

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <!-- Outer frame -->
+  <rect x="10" y="10" width="280" height="180" rx="20" ry="20" fill="#D22D2D" />
+
+  <!-- Screen -->
+  <rect x="40" y="40" width="220" height="120" rx="5" ry="5" fill="#EDEDED" />
+
+  <!-- Left Knob -->
+  <circle cx="60" cy="160" r="15" fill="#BDBDBD" stroke="#7A7A7A" stroke-width="2" />
+  <circle cx="60" cy="160" r="8" fill="#DADADA" />
+
+  <!-- Right Knob -->
+  <circle cx="240" cy="160" r="15" fill="#BDBDBD" stroke="#7A7A7A" stroke-width="2" />
+  <circle cx="240" cy="160" r="8" fill="#DADADA" />
+
+  <!-- Label -->
+  <text x="150" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#FFFFFF">
+    Etch A Sketch
+  </text>
+</svg>
