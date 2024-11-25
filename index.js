@@ -1,139 +1,215 @@
+let drawingMode = "random"; // Default mode
+
+function injectStyles() {
+  const style = document.createElement("style");
+  style.textContent = `
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .gridContainer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      align-content: flex-start;
+      width: 80vw;
+      height: 80vw;
+      max-width: 600px;
+      max-height: 600px;
+      margin: 1em auto;
+      border: 1em solid black;
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+    .gridBox {
+      box-sizing: border-box;
+      background-color: rgba(255, 255, 255, 1); /* Default white background */
+    }
+    #colorMode {
+      margin: 1em;
+      padding: 0.5em;
+      border: 1px solid blue;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #resetButton {
+      margin: 1em auto 0;
+      padding: 0.5em 1em;
+      border: 1px solid blue;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 1em;
+      text-align: center;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 function createContainer() {
   const container = document.createElement("div");
   container.className = "gridContainer";
-  container.style.display = "flex";
-  container.style.flexWrap = "wrap";
-  container.style.justifyContent = "flex-start";
-  container.style.alignContent = "flex-start";
-  container.style.width = "80vw";
-  container.style.height = "80vw";
-  container.style.maxWidth = "600px";
-  container.style.maxHeight = "600px";
-  container.style.margin = "1em auto";
-  container.style.border = "1em black solid";
-  container.style.boxSizing = "border-box";
-  container.style.cursor = "pointer";
-
   return container;
 }
-// Initialize Body
-function generateBody() {
-  const body = document.querySelector("body");
-  body.style.display = "flex";
-  body.style.flexDirection = "column";
-  body.style.alignItems = "center";
-  body.style.justifyContent = "center";
-  body.style.margin = "0";
-  body.style.padding = "0";
-  return body;
-}
-// Function to generate a random RGBA color with adjustable opacity
-function generateRandomColor(opacity = 1.0) {
-  const R = Math.floor(Math.random() * 256);
-  const G = Math.floor(Math.random() * 256);
-  const B = Math.floor(Math.random() * 256);
-  return `rgba(${R}, ${G}, ${B}, ${opacity})`;
-}
-// Function to increment opacity up to a maximum value of 1.0
-function incrementOpacity(currentOpacity, increment = 0.1, maxOpacity = 1.0) {
-  return Math.min(currentOpacity + increment, maxOpacity);
+
+function createDropdown() {
+  const dropdown = document.createElement("select");
+  dropdown.id = "colorMode";
+
+  const modes = [
+    { value: "grayscale", text: "Grayscale" },
+    { value: "random", text: "Random Color" },
+    { value: "custom", text: "Custom RGB" },
+  ];
+
+  modes.forEach((mode) => {
+    const option = document.createElement("option");
+    option.value = mode.value;
+    option.textContent = mode.text;
+    dropdown.appendChild(option);
+  });
+
+  dropdown.addEventListener("change", (event) => {
+    drawingMode = event.target.value;
+    if (drawingMode === "custom") {
+      const customColor = prompt("Enter an RGB value (e.g., 255,0,0 for red):");
+      if (customColor && /^(\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})$/.test(customColor)) {
+        document.body.dataset.customColor = customColor;
+      } else {
+        alert("Invalid RGB value! Falling back to random color.");
+        drawingMode = "random";
+      }
+    }
+    regenerateGrid();
+  });
+
+  return dropdown;
 }
 
-function generateGrid(size) {
-  // Remove existing grid
-  const existingGrid = document.querySelector(".gridContainer");
-  if (existingGrid) {
-    existingGrid.remove();
+function setGrid(size, colorFunction) {
+  const gridContainer = document.querySelector(".gridContainer");
+  if (gridContainer) {
+    gridContainer.innerHTML = ""; // Clear existing grid items
   }
 
-  // Create a new grid container
-  const gridContainer = createContainer();
-  body.appendChild(gridContainer);
-
-  // Calculate the size of each grid item
   const containerWidth = gridContainer.clientWidth;
   const itemSize = containerWidth / size;
 
-  // Create grid items
   for (let i = 0; i < size * size; i++) {
     const gridBox = document.createElement("div");
     gridBox.className = "gridBox";
     gridBox.style.width = `${itemSize}px`;
     gridBox.style.height = `${itemSize}px`;
-    gridBox.style.boxSizing = "border-box";
-    gridBox.style.backgroundColor = "rgba(255, 255, 255, 1)";
-    gridBox.dataset.opacity = 0.1;
+    gridBox.dataset.opacity = 0.1; // Initialize opacity
 
     // Hover effect for mouse
     gridBox.addEventListener("mouseenter", () => {
-      const currentOpacity = parseFloat(gridBox.dataset.opacity);
-      const newOpacity = incrementOpacity(currentOpacity);
-      gridBox.dataset.opacity = newOpacity;
-      gridBox.style.backgroundColor = generateRandomColor(newOpacity);
+      const colorWithOpacity = colorFunction(gridBox);
+      gridBox.style.backgroundColor = colorWithOpacity;
     });
 
-    // Add grid box to the container
     gridContainer.appendChild(gridBox);
   }
 
   // Enable touch support for the grid
-  enableTouchEvents(gridContainer);
+  enableTouchEvents(gridContainer, colorFunction);
 }
 
-function enableTouchEvents(container) {
-  // Handle when the finger touches the grid
-  container.addEventListener("touchstart", (event) => {
-    handleTouch(event);
-  });
-
-  // Handle when the finger moves across the grid
+function enableTouchEvents(container, colorFunction) {
+  container.addEventListener("touchstart", (event) => handleTouch(event, colorFunction));
   container.addEventListener("touchmove", (event) => {
-    handleTouch(event);
+    handleTouch(event, colorFunction);
     event.preventDefault(); // Prevent scrolling
   });
 }
 
-function handleTouch(event) {
+function handleTouch(event, colorFunction) {
   const touch = event.touches[0]; // Get the first touch point
   const target = document.elementFromPoint(touch.clientX, touch.clientY);
 
   if (target && target.classList.contains("gridBox")) {
-    const currentOpacity = parseFloat(target.dataset.opacity);
-    const newOpacity = incrementOpacity(currentOpacity);
-    target.dataset.opacity = newOpacity;
-    target.style.backgroundColor = generateRandomColor(newOpacity);
+    const colorWithOpacity = colorFunction(target);
+    target.style.backgroundColor = colorWithOpacity;
   }
 }
 
-/* Generate a reset button with each grid...probably makes more 
-sense to just hardcode that into the HTML but that's the the project reqs. */
+function getGrayscaleColor(element) {
+  let currentOpacity = parseFloat(element.dataset.opacity);
+  currentOpacity = Math.min(currentOpacity + 0.1, 1.0); // Increment opacity by 0.1
+  element.dataset.opacity = currentOpacity;
+  return `rgba(0, 0, 0, ${currentOpacity})`;
+}
+
+function getRandomColor(element) {
+  let currentOpacity = parseFloat(element.dataset.opacity);
+  currentOpacity = Math.min(currentOpacity + 0.1, 1.0); // Increment opacity by 0.1
+  element.dataset.opacity = currentOpacity;
+
+  const R = Math.floor(Math.random() * 256);
+  const G = Math.floor(Math.random() * 256);
+  const B = Math.floor(Math.random() * 256);
+  return `rgba(${R}, ${G}, ${B}, ${currentOpacity})`;
+}
+
+function getCustomColor(element) {
+  let currentOpacity = parseFloat(element.dataset.opacity);
+  currentOpacity = Math.min(currentOpacity + 0.1, 1.0); // Increment opacity by 0.1
+  element.dataset.opacity = currentOpacity;
+
+  const customColor = document.body.dataset.customColor || "0,0,0";
+  return `rgba(${customColor},${currentOpacity})`;
+}
+
+function determineColorFunction() {
+  if (drawingMode === "grayscale") return getGrayscaleColor;
+  if (drawingMode === "random") return getRandomColor;
+  if (drawingMode === "custom") return getCustomColor;
+}
+
+function regenerateGrid() {
+  const colorFunction = determineColorFunction();
+  setGrid(16, colorFunction);
+}
+
 function createResetButton() {
   const resetButton = document.createElement("button");
+  resetButton.id = "resetButton";
   resetButton.textContent = "Reset Grid";
-  resetButton.style.margin = "1em";
-  resetButton.style.padding = "0.5em 1em";
-  resetButton.style.border = "1px solid blue";
-  resetButton.style.borderRadius = "5px";
-  resetButton.style.cursor = "pointer";
+
   resetButton.addEventListener("click", () => {
     const gridSize = parseInt(prompt("Enter Grid Size (e.g., 16):"));
     if (gridSize && gridSize > 0 && gridSize <= 100) {
-      generateGrid(gridSize);
+      const colorFunction = determineColorFunction();
+      setGrid(gridSize, colorFunction);
     } else {
       alert("Please enter a valid number greater than 0 and less than 100!");
     }
   });
+
   return resetButton;
 }
 
+// Initialize the body and elements
+injectStyles();
 
-const body = generateBody();
-const resetButton = createResetButton();
+const body = document.querySelector("body");
+
 const title = document.createElement("h1");
-
-//Create Title
-body.appendChild(title);
 title.textContent = "Etch-a-Sketch";
-// Initialize the grid
-generateGrid(16); // Default grid size
+body.appendChild(title);
+
+const dropdown = createDropdown();
+body.appendChild(dropdown);
+
+const gridContainer = createContainer();
+body.appendChild(gridContainer);
+
+const resetButton = createResetButton();
 body.appendChild(resetButton);
+
+regenerateGrid(); // Default grid size and color function
